@@ -1,0 +1,7 @@
+apiVersion: operators.sigex.ibm/v1alpha1
+kind: ChaosTest
+metadata:
+  name: example-chaostest
+spec:
+  # Add fields here
+  size: 3
