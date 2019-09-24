@@ -10,9 +10,10 @@ import (
 // ChaosTestSpec defines the desired state of ChaosTest
 // +k8s:openapi-gen=true
 type ChaosTestSpec struct {
-	Targets  []string `json:"targets"`
-	Actions  []string `json:"actions"`
-	Interval int      `json:"interval"`
+	TargetResource string `json:"targetResource"`
+	Action         string `json:"action"`
+	Interval       int    `json:"interval"`
+	TimeToLive     int    `json:"ttl"`
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
 	// Add custom validation using kubebuilder tags: https://book-v1.book.kubebuilder.io/beyond_basics/generating_crd.html
@@ -21,7 +22,7 @@ type ChaosTestSpec struct {
 // ChaosTestStatus defines the observed state of ChaosTest
 // +k8s:openapi-gen=true
 type ChaosTestStatus struct {
-  Actions []string  `json:"actions"`
+	Actions []string `json:"actions"`
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
 	// Add custom validation using kubebuilder tags: https://book-v1.book.kubebuilder.io/beyond_basics/generating_crd.html

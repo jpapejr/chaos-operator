@@ -2,6 +2,9 @@ apiVersion: operators.sigex.ibm/v1alpha1
 kind: ChaosTest
 metadata:
   name: example-chaostest
+  namespace: default
 spec:
-  # Add fields here
-  size: 3
+  targetResource: pods
+  action: delete
+  interval: 10 # in seconds
+  timeToLive: 60 # in interval cycles (TTL + interval = tt time)
