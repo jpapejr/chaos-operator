@@ -17,10 +17,9 @@ spec:
         - name: chaos-operator
           # Replace this with the built image name
           image: jpapejr/chaos-operator:latest
-          imagePullPolicy: always
+          imagePullPolicy: Always
           command:
           - chaos-operator
-          imagePullPolicy: always
           env:
             - name: APISERVER
               value: ""
