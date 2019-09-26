@@ -147,9 +147,9 @@ func newPodForCR(cr *operatorsv1alpha1.ChaosTest) *batchv1.Job {
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{
 						{
-							Name:    "monkey",
-              Image:   "jpapejr/malevolent-monkey:50ebb8f84cb814f0f0b00fe9c13ee83644af1260",
-              ImagePullPolicy: corev1.PullAlways,
+							Name:            "monkey",
+							Image:           os.Getenv("MONKEY_IMAGE"),
+							ImagePullPolicy: corev1.PullAlways,
 							Env: []corev1.EnvVar{
 								{
 									Name:  "TOKEN",
@@ -178,7 +178,8 @@ func newPodForCR(cr *operatorsv1alpha1.ChaosTest) *batchv1.Job {
 							},
 						},
 					},
-          RestartPolicy: corev1.RestartPolicyNever,
+					RestartPolicy:      corev1.RestartPolicyNever,
+					ServiceAccountName: os.Getenv("MONKEY_SERVICE_ACCOUNT"),
 				},
 			},
 		},
