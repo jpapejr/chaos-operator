@@ -2,9 +2,9 @@ apiVersion: operators.sigex.ibm/v1alpha1
 kind: ChaosTest
 metadata:
   name: example-chaostest
-  namespace: default
+  namespace: kube-system 
 spec:
   targetResource: pods
   action: delete
-  interval: 10 # in seconds
-  timeToLive: 60 # in interval cycles (TTL + interval = tt time)
+  interval: "10" # in seconds
+  ttl: "6" # in interval cycles (TTL + interval = tt time)
