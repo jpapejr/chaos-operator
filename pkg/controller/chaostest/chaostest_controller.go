@@ -2,8 +2,10 @@ package chaostest
 
 import (
 	"context"
+	"os"
 
 	operatorsv1alpha1 "github.com/jpapejr/chaos-operator/pkg/apis/operators/v1alpha1"
+	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -53,7 +55,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 
 	// TODO(user): Modify this to be the types you create that are owned by the primary resource
 	// Watch for changes to secondary resource Pods and requeue the owner ChaosTest
-	err = c.Watch(&source.Kind{Type: &corev1.Pod{}}, &handler.EnqueueRequestForOwner{
+	err = c.Watch(&source.Kind{Type: &batchv1.Job{}}, &handler.EnqueueRequestForOwner{
 		IsController: true,
 		OwnerType:    &operatorsv1alpha1.ChaosTest{},
 	})
@@ -101,51 +103,82 @@ func (r *ReconcileChaosTest) Reconcile(request reconcile.Request) (reconcile.Res
 	}
 
 	// Define a new Pod object
-	pod := newPodForCR(instance)
+	job := newPodForCR(instance)
 
 	// Set ChaosTest instance as the owner and controller
-	if err := controllerutil.SetControllerReference(instance, pod, r.scheme); err != nil {
+	if err := controllerutil.SetControllerReference(instance, job, r.scheme); err != nil {
 		return reconcile.Result{}, err
 	}
 
 	// Check if this Pod already exists
-	found := &corev1.Pod{}
-	err = r.client.Get(context.TODO(), types.NamespacedName{Name: pod.Name, Namespace: pod.Namespace}, found)
+	found := &batchv1.Job{}
+	err = r.client.Get(context.TODO(), types.NamespacedName{Name: job.Name, Namespace: job.Namespace}, found)
 	if err != nil && errors.IsNotFound(err) {
-		reqLogger.Info("Creating a new Pod", "Pod.Namespace", pod.Namespace, "Pod.Name", pod.Name)
-		err = r.client.Create(context.TODO(), pod)
+		reqLogger.Info("Creating a new Pod", "Job.Namespace", job.Namespace, "Job.Name", job.Name)
+		err = r.client.Create(context.TODO(), job)
 		if err != nil {
 			return reconcile.Result{}, err
 		}
 
-		// Pod created successfully - don't requeue
+		// Job created successfully - don't requeue
 		return reconcile.Result{}, nil
 	} else if err != nil {
 		return reconcile.Result{}, err
 	}
 
-	// Pod already exists - don't requeue
-	reqLogger.Info("Skip reconcile: Pod already exists", "Pod.Namespace", found.Namespace, "Pod.Name", found.Name)
+	// Job already exists - don't requeue
+	reqLogger.Info("Skip reconcile: Job already exists", "Job.Namespace", found.Namespace, "Job.Name", found.Name)
 	return reconcile.Result{}, nil
 }
 
 // newPodForCR returns a busybox pod with the same name/namespace as the cr
-func newPodForCR(cr *operatorsv1alpha1.ChaosTest) *corev1.Pod {
+func newPodForCR(cr *operatorsv1alpha1.ChaosTest) *batchv1.Job {
 	labels := map[string]string{
 		"app": cr.Name,
 	}
-	return &corev1.Pod{
+	return &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      cr.Name + "-pod",
+			Name:      cr.Name,
 			Namespace: cr.Namespace,
 			Labels:    labels,
 		},
-		Spec: corev1.PodSpec{
-			Containers: []corev1.Container{
-				{
-					Name:    "busybox",
-					Image:   "busybox",
-					Command: []string{"sleep", "3600"},
+		Spec: batchv1.JobSpec{
+			Template: corev1.PodTemplateSpec{
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						{
+							Name:    "monkey",
+              Image:   "jpapejr/malevolent-monkey:50ebb8f84cb814f0f0b00fe9c13ee83644af1260",
+              ImagePullPolicy: corev1.PullAlways,
+							Env: []corev1.EnvVar{
+								{
+									Name:  "TOKEN",
+									Value: os.Getenv("TOKEN"),
+								},
+								{
+									Name:  "APISERVER",
+									Value: os.Getenv("APISERVER"),
+								},
+								{
+									Name:  "NAMESPACE",
+									Value: cr.Namespace,
+								},
+								{
+									Name:  "ACTION",
+									Value: cr.Spec.Action,
+								},
+								{
+									Name:  "TTL",
+									Value: cr.Spec.TimeToLive,
+								},
+								{
+									Name:  "INTERVAL",
+									Value: cr.Spec.Interval,
+								},
+							},
+						},
+					},
+          RestartPolicy: corev1.RestartPolicyNever,
 				},
 			},
 		},
