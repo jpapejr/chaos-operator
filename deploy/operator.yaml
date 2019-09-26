@@ -16,15 +16,22 @@ spec:
       containers:
         - name: chaos-operator
           # Replace this with the built image name
-          image: REPLACE_IMAGE
+          image: jpapejr/chaos-operator:latest
+          imagePullPolicy: always
           command:
           - chaos-operator
-          imagePullPolicy: Always
+          imagePullPolicy: always
           env:
+            - name: APISERVER
+              value: ""
+            - name: TOKEN
+              value: ""
+            - name: MONKEY_IMAGE
+              value: "jpapejr/malevolent-monkey:23e1355a16f463bf8ecf6173db9c61d800a93cb6"
+            - name: MONKEY_SERVICE_ACCOUNT
+              value: "monkey"
             - name: WATCH_NAMESPACE
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.namespace
+              value: ""
             - name: POD_NAME
               valueFrom:
                 fieldRef:
